@@ -2,6 +2,10 @@
 
 It is a serverless todo service designed to provide a todo list service to onlyone-portal
 
+# Architecture
+
+![architecture.png](architecture.png)
+
 # local development
 
 The product is build with [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) 
