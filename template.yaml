@@ -1,58 +1,87 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  todo-service
+  Serverless Todo Service 
 
-  Sample SAM Template for todo-service
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: serverless-todo
+    Description: Serverless Todo Service
+    Author: mrFlick72
+    SpdxLicenseId: Apache-2.0
+    Labels: ['playground']
+    SemanticVersion: 0.0.1
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 20
     MemorySize: 128
 
-    Tracing: Active
-  Api:
-    TracingEnabled: true
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  TodoStorage:
+    Type: AWS::Serverless::SimpleTable
     Properties:
-      CodeUri: hello_world/
+      TableName: Todo
+  DeleteTodo:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Connectors:
+      MyConn:
+        Properties:
+          Destination:
+            Id: TodoStorage
+          Permissions:
+            - Write
+    Properties:
+      CodeUri: app/delete-todo
       Handler: app.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.8
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /hello
+            Path: /todo/{id}
+            Method: delete
+  ReadTodo:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Connectors:
+      MyConn:
+        Properties:
+          Destination:
+            Id: TodoStorage
+          Permissions:
+            - Read
+    Properties:
+      CodeUri: app/get-todos
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /todo
             Method: get
-
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
+  SaveTodo:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Connectors:
+      MyConn:
+        Properties:
+          Destination:
+            Id: TodoStorage
+          Permissions:
+            - Write
     Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
-    Properties:
-      ResourceGroupName:
-        Ref: ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
-Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+      CodeUri: app/save-todo
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /todo
+            Method: put
